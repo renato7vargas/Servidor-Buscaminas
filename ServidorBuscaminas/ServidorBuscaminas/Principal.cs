@@ -50,13 +50,20 @@ namespace ServidorBuscaminas
 
         private static void CerrarTodosLosSockets()
         {
-            foreach (Socket socket in socketsClientes)
+            foreach (Socket socket in socketsClientes)//////////////////////////
             {
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
-            }
+
+                socket.Shutdown(SocketShutdown.Both);///////////////////////////////////
+                socket.Close();/////////////////////////////////////////
+            }////////////////////////////////////
 
             socketServidor.Close();
+        }
+        private static void BroadcastVictoria() {
+            byte[] mensaje = Encoding.ASCII.GetBytes("Partida Terminada");
+            foreach (Socket socket in socketsClientes) {
+                socket.Send(mensaje);
+            }
         }
 
         private static void AceptarCallback(IAsyncResult AR)
@@ -87,6 +94,7 @@ namespace ServidorBuscaminas
             DbProviderFactory factory = DbProviderFactories.GetFactory(provider);
 
             Socket socketActual = (Socket)AR.AsyncState;
+            Console.WriteLine((Socket)AR.AsyncState);
             int recibido;
 
             try
@@ -143,6 +151,7 @@ namespace ServidorBuscaminas
                         paramContrasenaUsuario.ParameterName = "@ContrasenaUsuario";
                         paramContrasenaUsuario.Value = nuevaPeticion.Contrasena;
                         command.Parameters.Add(paramContrasenaUsuario);
+                        Console.WriteLine("usuario comprobado");
 
 
 
@@ -210,12 +219,11 @@ namespace ServidorBuscaminas
                 socketActual.Send(bufferString);
             }
 
-            if (nuevaPeticion.TipoPeticion == "get time") // Client requested time
+            if (nuevaPeticion.TipoPeticion == "banderas capturadas") // Cliente da a concer que capturó todas la banderas
             {
-                Console.WriteLine("Text is a get time request");
-                byte[] data = Encoding.ASCII.GetBytes("La hora");
-                socketActual.Send(data);
-                Console.WriteLine("Time sent to client");
+                Console.WriteLine("Un cliente capturo todas las banderas");
+                BroadcastVictoria();
+                Console.WriteLine("Mensaje enviado a todos los clientes");
             }
 
             socketActual.BeginReceive(buffer, 0, MEDIDA_BUFFER, SocketFlags.None, RecibirCallback, socketActual);
